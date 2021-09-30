@@ -1,5 +1,9 @@
 //importe the Post model file and assigned it to a variable
 const Post = require('../models/Post')
+//import the mail service package
+const sendgrid = require('@sendgrid/mail')
+//connect the email service to the app via API keys
+sendgrid.setApiKey(process.env.SENDGRIDAPIKEY)
 
 //create a exportable property that renders the create post template
 exports.viewCreateScreen = function(req, res){
@@ -10,6 +14,14 @@ exports.viewCreateScreen = function(req, res){
 exports.create = function(req, res){
     let post = new Post(req.body, req.session.user._id) //This variable creates a new object of the constructor function Post in the Post model file with the argument of the user input as well as the user's unique Object ID that the database created for it. It's accessed from the session data
     post.create().then(function(newId){ //the newId argument receives the post id that the create prototype method in the Post model resolves
+        //Send an email notification of a new post
+        sendgrid.send({
+            to: `christcmk394@gmail.com`,
+            from: 'mbuyicmk394@gmail.com',
+            subject: 'New post notification',
+            text: 'You just created a new post',
+            html: 'You did a great job of creating a post'
+        })
         req.flash("success", "New Post successfully created")
         req.session.save(() => res.redirect(`/post/${newId}`))
     }).catch(function(err){
